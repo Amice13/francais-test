@@ -29,6 +29,7 @@ export interface Question {
 export interface ResponseStats {
   correct: number
   failed: number
+  isKnown: boolean
 }
 
 export interface ExamenStats {
@@ -38,6 +39,7 @@ export interface ExamenStats {
 }
 
 export interface Effort {
+  theme: string
   date: string
   correct: number
   failed: number
@@ -53,4 +55,5 @@ export interface CurrentExam {
   time: number
   timePassed: number
   currentPosition: number
+  date: string
 }

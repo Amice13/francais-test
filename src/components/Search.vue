@@ -64,7 +64,7 @@
             <v-list-item
               v-for="theme of items"
               @click="startQuiz(theme)"
-              subtitle="Dernière tentative: jamais"
+              :subtitle="`Dernière tentative: ${theme.lastDate ? new Date(theme.lastDate).toLocaleString('fr') : 'jamais' }`"
               :disabled="theme.numberOfQuestions === 0"
               :key="theme._id"
               :title="theme.title"
@@ -75,7 +75,7 @@
                 </v-avatar>
               </template>
               <template v-slot:append>
-                <v-chip size="small" label>0 / {{ theme.numberOfQuestions }}</v-chip>
+                <v-chip size="small" label>{{ theme.answers }} / {{ theme.numberOfQuestions }}</v-chip>
               </template>
             </v-list-item>
           </TransitionGroup>
@@ -86,12 +86,13 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { getSampleOfUnique } from '@/composables/get-sample'
-import type { CurrentExam } from '@/custom'
+import type { CurrentExam } from '@/custom.d.ts'
 import questions from '@/quizes/questions.json'
 import { useAppStore } from '@/stores/app'
-
-const { questionIsKnown, getRecentEffort, setCurrentExam } = useAppStore()
+const router = useRouter()
+const { questionIsKnown, getRecentEffort, setCurrentExam, getSavedExam, getErrors } = useAppStore()
 const searchTypes = ['Personnel', 'Par sujet', 'Par thème'] as const
 
 type Question = (typeof questions)[number]
@@ -127,7 +128,7 @@ const themesList = computed(() => {
     }
     if (obj[key] !== undefined) {
       const answers = obj[key].answers ?? 0
-      obj[key].answers = answers + questionIsKnown(question.slug)
+      obj[key].answers = answers + (questionIsKnown(question.slug) ? 1 : 0) 
       obj[key].numberOfQuestions++
       obj[key].lastDate = getRecentEffort(key).date
     }
@@ -145,7 +146,7 @@ const topicsList = computed(() => {
     }
     if (obj[key] !== undefined) {
       const answers = obj[key].answers ?? 0
-      obj[key].answers = answers + questionIsKnown(question.slug)
+      obj[key].answers = answers + (questionIsKnown(question.slug) ? 1 : 0) 
       obj[key].numberOfQuestions++
       obj[key].lastDate = getRecentEffort(key).date
     }
@@ -177,24 +178,28 @@ const level = ref<keyof typeof levels>('csp')
 const searchType = ref<SearchTypes>('Par thème')
 const search = ref<string>('')
 
+const savedExam = getSavedExam()
+const errors = getErrors()
+
 const items = computed<Themes[]>(() => {
   let currentThemes: Themes[] = [
     {
       _id: 'examen',
-      title: 'Test examen',
+      title: 'Commencez un examen blanc',
       numberOfQuestions: 40,
       answers: 0
     },
     {
       _id: 'dernier',
-      title: 'Continuer examen dernier',
-      numberOfQuestions: 0,
-      answers: 0
+      title: 'Continuer l\'examen dernier',
+      numberOfQuestions: savedExam?.questions.length ?? 0,
+      answers: savedExam?.responses.filter(el => el !== null).length ?? 0,
+      lastDate: savedExam?.date
     },
     {
       _id: 'fauts',
       title: 'Examiner des fauts',
-      numberOfQuestions: 0,
+      numberOfQuestions: errors.length,
       answers: 0
     }
   ]
@@ -209,17 +214,30 @@ const items = computed<Themes[]>(() => {
 
 const startQuiz = (theme: Themes) => {
   let questions = selectedQuestions.value
-  if (searchType.value === 'Personnel' && theme.title === 'Test examen') {
+  if (searchType.value === 'Personnel' && theme._id === 'examen') {
     questions = getSampleOfUnique(questions, 40)
   }
+  if (searchType.value === 'Personnel' && theme._id === 'dernier') {
+    if (savedExam === null) return
+    setCurrentExam(savedExam)
+    router.push('/test')
+    return
+  }
+  if (searchType.value === 'Personnel' && theme._id === 'fauts') {
+    questions = errors.map((error: string) => {
+      return questions.find(q => q.slug === error) as Question
+    }).filter(Boolean)
+  }
+
   if (['Par thème', 'Par sujet'].includes(searchType.value)) {
     const key = searchType.value === 'Par thème' ? 'themeName' : 'sujetName'
     questions = selectedQuestions.value.filter(question => question[key] === theme.title)
   }
-  const numberOfQuestions = searchType.value === 'Personnel' ? 40 : questions.length
+  const numberOfQuestions = questions.length
   const time = numberOfQuestions * 60 * 1000 + 5 * 60 * 1000
-  const responses = Array(numberOfQuestions).fill(undefined)
+  const responses = Array(numberOfQuestions).fill(null)
   const currentExam: CurrentExam = {
+    date: new Date().toISOString(),
     questions,
     theme: theme.title,
     time,
@@ -228,6 +246,7 @@ const startQuiz = (theme: Themes) => {
     currentPosition: 0
   }
   setCurrentExam(currentExam)
+  router.push('/test')
 }
 
 </script>

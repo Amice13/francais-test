@@ -61,6 +61,7 @@
       <v-bottom-sheet v-model="showTip" :scrim="false" >
         <v-container class="fill-height d-flex align-center vh-100 pb-md-6 pt-md-6 bg-white" max-width="900">
           <v-card
+            class="w-100"
             flat
             :color="response === currentQuestion.correct_answer_index ? 'green-lighten-5' : 'red-lighten-5'"
             :text="currentQuestion.expanded_explanation"
@@ -158,34 +159,36 @@
       </v-card>
     </v-dialog>
     <!-- Exit dialog -->
-    <v-dialog v-model="isFinished" max-width="360">
+    <v-dialog v-model="showExitDialog" max-width="360">
       <v-card>
         <v-card-title primary-title class="text-center">
-          Le temps s'est écoulé
+          Fin de la session
         </v-card-title>
         <v-card-text class="text-center">
-          <v-icon v-if="successFinal" size="86px" color="green-darken-2">mdi-check-circle</v-icon>
-          <v-icon v-if="!successFinal" size="86px" color="red-darken-2">mdi-close-circle</v-icon>
+          <v-icon size="86px" color="primary">mdi-exit-run</v-icon>
           <div class="text-h6 my-4">{{ successfullResponses.length }} / {{ questions.length }}</div>
-          <div class="font-weight-bold">
-            <span v-if="successFinal">Félicitations !</span>
-            <span v-if="!successFinal">Désolé</span>
-          </div>
-          <div>Vous avez <span v-if="successFinal">réussi</span><span v-if="!successFinal">échouer à</span> l'examen !</div>
+          <div class="font-weight-bold">Retour au menu !</div>
+          <div>Vous pouvez savuer la session en cours et y revenir plus tard, ou y mettre fin.</div>
         </v-card-text>
         <v-card-actions class="d-flex justify-space-between">
           <v-btn
-            @click="add(5 * 60 * 1000)"
-            prepend-icon="mdi-timer-plus"
-            color="orange-darken-1"
-            variant="flat"
-            text="Ajouter du temps"
+            @click="showExitDialog = false" 
+            color="orange-darken-4"
+            variant="plain"
+            text="Anuller"
           />
+          <v-spacer />
           <v-btn
             @click="finishExam"
-            :color="successFinal ? 'green-darken-2' : 'red-darken-2'"
+            color="orange-darken-4"
             variant="flat"
             text="Finir"
+          />
+          <v-btn
+            @click="saveCurrentExam"
+            color="primary"
+            variant="flat"
+            text="Savuer"
           />
         </v-card-actions>
       </v-card>
@@ -196,11 +199,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useCountdown } from '@/composables/countdown'
-import { type CurrentExam, type Effort, type ExamenStats, type Question } from '@/custom'
+import type { CurrentExam, Effort, ExamenStats, Question } from '@/custom.d.ts'
 import { useAppStore } from '@/stores/app'
-const { getCurrentExam, saveExam, saveEffort, setResponse } = useAppStore()
+const { getCurrentExam, saveExam, saveExamStats, saveEffort, setResponse } = useAppStore()
 const router = useRouter()
-
 const currentExam = ref<CurrentExam>(getCurrentExam()) 
 const targetTime = Number(new Date()) + currentExam.value.time - currentExam.value.timePassed
 const { minutes, seconds, timePassed, pause, resume, add, isFinished } = useCountdown(targetTime)
@@ -236,6 +238,7 @@ const goToNext = (): void => {
   if (firstPosition > -1) {
     currentExam.value.currentPosition = firstPosition
     showTip.value = false
+    return
   }
   showTip.value = false
   showResultDialog.value = true
@@ -270,6 +273,7 @@ const getColor = (index: number, isHovering: boolean | null) => {
 }
 
 const finishExam = () => {
+  saveExam(null)
   const isFinished = responses.value.filter(el => el !== null).length === questions.value.length
 
   if (currentExam.value.theme === 'Test examen' && isFinished) {
@@ -278,10 +282,11 @@ const finishExam = () => {
       score: successfullResponses.value.length,
       time: timePassed.value
     }
-    saveExam(examResult)
+    saveExamStats(examResult)
   }
 
   const effort: Effort = {
+    theme: currentExam.value.theme,
     date: new Date().toISOString(),
     correct: successfullResponses.value.length,
     failed: questions.value.length - successfullResponses.value.length,
@@ -290,6 +295,11 @@ const finishExam = () => {
     isFinished
   }
   saveEffort(effort)
+  router.push('/')
+}
+
+const saveCurrentExam = () => {
+  saveExam(currentExam.value)
   router.push('/')
 }
 
