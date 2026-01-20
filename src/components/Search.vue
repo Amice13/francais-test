@@ -108,11 +108,6 @@ interface Themes {
 const levels: Record<Question['level'], Question['typeName']> = {}
 for (const question of questions) levels[question.level] = question.typeName
 
-const themes = [...new Set(questions.map(el => el.themeName))]
-const topics = [...new Set(questions.map(el => el.sujetName))]
-type Theme = typeof themes[number]
-type Topic = typeof topics[number]
-
 const selectedQuestions = computed(() => {
   const currentQuestions = questions.filter(question => question.level === level.value).map(el => {
     el.themeName = el.themeName.replace(/&#x27;/g, '\'')

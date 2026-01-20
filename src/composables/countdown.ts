@@ -1,11 +1,13 @@
 export function useCountdown (targetTimestamp: number) {
   const remainingMs = ref(Math.max(targetTimestamp - Date.now(), 0))
   const isPaused = ref(false)
+  const timePassed = ref(0)
   let timer: number | undefined
 
   const tick = () => {
     if (isPaused.value || remainingMs.value === 0) return
     remainingMs.value = Math.max(remainingMs.value - 1000, 0)
+    timePassed.value = timePassed.value + 1000
   }
 
   const seconds = computed(() =>
@@ -53,6 +55,7 @@ export function useCountdown (targetTimestamp: number) {
     hours,
     minutes,
     seconds,
+    timePassed,
     isFinished,
     isPaused,
     add,

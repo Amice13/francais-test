@@ -49,7 +49,7 @@ export interface Effort {
 export interface CurrentExam {
   theme: string
   questions: Question[]
-  responses: (boolean | null)[]
+  responses: (number | null)[]
   time: number
   timePassed: number
   currentPosition: number
