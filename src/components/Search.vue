@@ -175,7 +175,7 @@ const getStatus = (theme: Themes): keyof typeof statuses => {
 
 const level = ref<keyof typeof levels>('csp')
 
-const searchType = ref<SearchTypes>('Par thème')
+const searchType = ref<SearchTypes>('Personnel')
 const search = ref<string>('')
 
 const savedExam = getSavedExam()
