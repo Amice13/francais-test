@@ -1,6 +1,6 @@
 <template>
   <v-container class="app-viewport d-flex align-center py-0" max-width="900">
-    <div class="d-flex w-100 flex-column vh-100 py-4 py-md-6">
+    <div class="d-flex w-100 flex-column app-viewport py-4 py-md-6">
       <!-- Status -->
       <div class="d-flex w-100 align-center">
         <div>
