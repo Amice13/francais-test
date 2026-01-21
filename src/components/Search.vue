@@ -259,8 +259,9 @@ const startQuiz = (theme: Themes) => {
 
 <style>
 .vh-100 {
-  height: 100vh;
-  max-height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  max-height: 100dvh;
 }
 
 .h-0 {

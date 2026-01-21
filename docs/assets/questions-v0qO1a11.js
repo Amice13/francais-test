@@ -1,0 +1,1 @@
+import{V as o}from"./VMain-_UIyN7fG.js";import{d as t,c as r,r as a,o as n,w as s,a as c}from"./index-B0s3K25D.js";import"./tag-HJIxN74H.js";import"./ssrBoot-DeVHiodS.js";const d=t({__name:"questions",setup(p){return(_,i)=>{const e=a("router-view");return n(),r(o,null,{default:s(()=>[c(e)]),_:1})}}});export{d as default};
