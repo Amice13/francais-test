@@ -20,10 +20,7 @@
                 @click="level = l"
                 :key="l"
               >
-                <v-list-item-title>
-                  <span class="hidden-sm-and-down">{{ levels[l] }}</span>
-                  <span class="hidden-md-and-up">{{ l.toUpperCase() }}</span>
-                </v-list-item-title>
+                <v-list-item-title>{{ levels[l] }}</v-list-item-title>
               </v-list-item>
             </v-list>
           </v-menu>
