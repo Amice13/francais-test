@@ -41,15 +41,15 @@
         </div>
         <!-- Responses -->
         <div class="w-100 mt-2 my-md-4">
-          <div v-for="(option, index) in options" :key="'option-' + index">
+          <div v-for="option in options" :key="'option-' + option.index">
             <v-hover>
               <template v-slot:default="{ isHovering, props }">
                 <v-alert
                   v-bind="props"
-                  @click="selectOption(index)"
-                  :text="option"
-                  class="mb-2 slide-fade-enter-active text-grey-darken-3 pa-md-4 pa-2 text-body-2 text-md-body-1"
-                  :class="getColor(index, isHovering)"
+                  @click="selectOption(option.index)"
+                  :text="option.title"
+                  class="mb-2 slide-fade-enter-active pa-md-4 pa-2"
+                  :class="getColor(option.index, isHovering)"
                   variant="outlined"
                 />
               </template>
@@ -59,13 +59,18 @@
       </div>
       <!-- Submit -->
       <v-bottom-sheet v-model="showTip" :scrim="false" >
-        <v-container class="fill-height d-flex align-center vh-100 pb-md-6 pt-md-6 bg-white" max-width="900">
+        <v-container class="fill-height d-flex align-center pb-md-6 pt-md-6 bg-white" max-width="900">
           <v-card
             class="w-100"
             flat
             :color="response === currentQuestion.correct_answer_index ? 'green-lighten-5' : 'red-lighten-5'"
-            :text="currentQuestion.expanded_explanation"
-          ></v-card>
+          >
+            <v-card-text class="text-body-1">
+              <div>Bonne réponse:</div>
+              <div class="font-weight-bold mb-4">{{ currentQuestion.options[currentQuestion.correct_answer_index] }}</div>
+              <div>{{ currentQuestion.expanded_explanation }}</div>
+            </v-card-text>
+          </v-card>
           <div class="w-100 d-flex justify-space-between mt-4 mb-0 mt-md-8 mb-md-4">
             <v-spacer />
             <v-btn
@@ -79,7 +84,7 @@
       </v-bottom-sheet>
       <div v-if="response === null" class="w-100 d-flex justify-space-between mt-4 mt-md-8 mb-md-4">
         <v-btn @click="goToNext" color="grey-darken-4" variant="outlined">Passer</v-btn>
-        <v-btn @click="verify" color="primary" :disabled="selectedOption === undefined">Vérifier</v-btn>
+        <v-btn @click="verify" color="primary" :disabled="selectedOption === null">Vérifier</v-btn>
       </div>
       <div v-if="response !== null" class="w-100 max-w-100 d-flex justify-space-between mt-4 mt-md-8 mb-md-4">
         <v-btn
@@ -107,8 +112,8 @@
         <v-card-text class="text-center">
           <v-icon v-if="successFinal" size="86px" color="green-darken-2">mdi-check-circle</v-icon>
           <v-icon v-if="!successFinal" size="86px" color="red-darken-2">mdi-close-circle</v-icon>
-          <div class="text-h6 my-4">{{ successfullResponses.length }} / {{ questions.length }}</div>
-          <div class="font-weight-bold">
+          <div class="text-h6 my-4">{{ successfullResponses.length }} / {{ questions.length }} <span class="text-caption">({{ (successfullResponses.length / questions.length * 100).toFixed(2) }}%)</span></div>
+            <div class="font-weight-bold">
             <span v-if="successFinal">Félicitations !</span>
             <span v-if="!successFinal">Désolé</span>
           </div>
@@ -134,7 +139,7 @@
         <v-card-text class="text-center">
           <v-icon v-if="successFinal" size="86px" color="green-darken-2">mdi-check-circle</v-icon>
           <v-icon v-if="!successFinal" size="86px" color="red-darken-2">mdi-close-circle</v-icon>
-          <div class="text-h6 my-4">{{ successfullResponses.length }} / {{ questions.length }}</div>
+          <div class="text-h6 my-4">{{ successfullResponses.length }} / {{ questions.length }} <span class="text-caption">({{ (successfullResponses.length / questions.length * 100).toFixed(2) }}%)</span></div>
           <div class="font-weight-bold">
             <span v-if="successFinal">Félicitations !</span>
             <span v-if="!successFinal">Désolé</span>
@@ -166,7 +171,7 @@
         </v-card-title>
         <v-card-text class="text-center">
           <v-icon size="86px" color="primary">mdi-exit-run</v-icon>
-          <div class="text-h6 my-4">{{ successfullResponses.length }} / {{ questions.length }}</div>
+          <div class="text-h6 my-4">{{ successfullResponses.length }} / {{ questions.length }} <span class="text-caption">({{ (successfullResponses.length / questions.length * 100).toFixed(2) }}%)</span></div>
           <div class="font-weight-bold">Retour au menu !</div>
           <div>Vous pouvez savuer la session en cours et y revenir plus tard, ou y mettre fin.</div>
         </v-card-text>
@@ -215,7 +220,24 @@ const showExitDialog = ref<boolean>(false)
 const currentQuestion = computed(() => currentExam.value.questions[currentExam.value.currentPosition] as Question)
 const questions = computed(() => currentExam.value.questions)
 const responses = computed(() => currentExam.value.responses)
-const options = computed(() => currentQuestion.value.options)
+
+function shuffle<T>(arr: T[]) {
+  const a = arr.slice()
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const tmp = a[i]
+    a[i] = a[j] as T
+    a[j] = tmp as T
+  }
+  return a
+}
+
+const options = computed(() => {
+  const options = currentQuestion.value.options.map((title, index) => {
+    return { title, index }
+  })
+  return shuffle(options)
+})
 const response = computed(() => currentExam.value.responses[currentExam.value.currentPosition])
 const currentPosition = computed(() => currentExam.value.currentPosition)
 const successfullResponses = computed(() => {
@@ -251,9 +273,11 @@ const selectOption = (number: number): void => {
 
 const verify = (): void => {
   if (response.value !== null) return
+  if (selectedOption.value === null) return
   currentExam.value.responses[currentExam.value.currentPosition] = selectedOption.value
   const result = selectedOption.value === currentQuestion.value.correct_answer_index ? 'correct' : 'failed'
   setResponse(currentQuestion.value.slug, result)
+  showTip.value = true
 }
 
 const getColor = (index: number, isHovering: boolean | null) => {
@@ -269,14 +293,14 @@ const getColor = (index: number, isHovering: boolean | null) => {
   }
   // Response is selected
   if (selectedOption.value !== index) return 'bg-grey-lighten-3 cursor-pointer'
-  return 'bg-indigo-lighten-5'
+  return 'bg-blue-darken-3 text-white'
 }
 
 const finishExam = () => {
   saveExam(null)
   const isFinished = responses.value.filter(el => el !== null).length === questions.value.length
 
-  if (currentExam.value.theme === 'Test examen' && isFinished) {
+  if (currentExam.value.theme === 'Commencez un examen blanc' && isFinished) {
     const examResult: ExamenStats = {
       date: new Date().toISOString(),
       score: successfullResponses.value.length,
@@ -307,9 +331,11 @@ const saveCurrentExam = () => {
 
 <style>
 .vh-100 {
-  height: 100vh;
-  max-height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  max-height: 100dvh;
 }
+
 .slide-fade-enter-active {
   transition: all 0.2s;
 }

@@ -2,7 +2,7 @@
   <v-container class="fill-height d-flex align-center py-0 px-2 px-md-4" max-width="900">
     <div class="d-flex w-100 flex-column h-100 py-2 py-md-6">
       <!-- Taskbar -->
-      <div class="d-flex w-100 align-center bg-primary pa-2 pa-md-4 rounded-xl justify-space-between">
+      <div class="d-flex w-100 align-center bg-primary py-2 px-3 pa-md-4 rounded-xl justify-space-between">
         <div class="text-h4">Quiz <span class="hidden-sm-and-down">de français</span></div>
         <v-btn
           variant="tonal"
@@ -92,7 +92,14 @@ import type { CurrentExam } from '@/custom.d.ts'
 import questions from '@/quizes/questions.json'
 import { useAppStore } from '@/stores/app'
 const router = useRouter()
-const { questionIsKnown, getRecentEffort, setCurrentExam, getSavedExam, getErrors } = useAppStore()
+const {
+  questionIsKnown,
+  getRecentEffort,
+  setCurrentExam,
+  getSavedExam,
+  getErrors,
+  getLastExamStats
+} = useAppStore()
 const searchTypes = ['Personnel', 'Par sujet', 'Par thème'] as const
 
 type Question = (typeof questions)[number]
@@ -180,6 +187,7 @@ const search = ref<string>('')
 
 const savedExam = getSavedExam()
 const errors = getErrors()
+const lastExam = getLastExamStats()
 
 const items = computed<Themes[]>(() => {
   let currentThemes: Themes[] = [
@@ -187,7 +195,8 @@ const items = computed<Themes[]>(() => {
       _id: 'examen',
       title: 'Commencez un examen blanc',
       numberOfQuestions: 40,
-      answers: 0
+      answers: lastExam?.score ?? 0,
+      lastDate: lastExam?.date
     },
     {
       _id: 'dernier',

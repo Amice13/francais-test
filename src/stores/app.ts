@@ -1,5 +1,6 @@
 import type { CurrentExam, Effort, ExamenStats, ResponseStats } from '@/custom.d.ts'
 import { defineStore } from 'pinia'
+import type { un } from 'vue-router/dist/router-CWoNjPRp.mjs'
 const persistStoreKey = 'francais-test'
 
 export const useAppStore = defineStore('app', () => {
@@ -41,6 +42,10 @@ export const useAppStore = defineStore('app', () => {
     return savedExam.value
   }
 
+  const getLastExamStats = (): ExamenStats | undefined => {
+    return examsList.value.slice(-1)[0]
+  }
+
   const saveEffort = (effort: Effort): void => {
     recentEfforts.value[effort.theme] = effort
     effortsList.value.push(effort)
@@ -69,6 +74,7 @@ export const useAppStore = defineStore('app', () => {
     saveExam,
     saveExamStats,
     getSavedExam,
+    getLastExamStats,
     getErrors,
     questionIsKnown,
     getRecentEffort,
